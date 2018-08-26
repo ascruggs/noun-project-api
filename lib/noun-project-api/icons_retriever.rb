@@ -26,7 +26,7 @@ module NounProjectApi
     end
 
     def find_by_collection(slug_or_id, limit = nil, offset = nil, page = nil)
-      fail(ArgumentError, "Missing search term") unless term
+      fail(ArgumentError, "Missing search slug_or_id") unless slug_or_id
 
       args = {
         "limit" => limit,
