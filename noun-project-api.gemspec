@@ -5,7 +5,7 @@ $:.push File.expand_path('../lib', __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = 'noun-project-api'
-  s.version     = SemVer.find.format '%M.%m.%p'
+  s.version     = '1.0.0'
   s.platform    = Gem::Platform::RUBY
   s.date        = Date.today.to_s
   s.summary     = "An API wrapper for The Noun Project API's"
