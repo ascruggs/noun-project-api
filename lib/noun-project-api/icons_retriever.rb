@@ -1,9 +1,8 @@
-require "noun-project-api/retriever"
-
+require "noun-project-api/connection"
 module NounProjectApi
   # Retrieve icons.
-  class IconsRetriever < Retriever
-    API_PATH = "/icons/".freeze
+  class IconsRetriever
+    include Connection
 
     # Finds multiple icons based on the term
     # * term - search term
@@ -13,24 +12,29 @@ module NounProjectApi
     def find(term, limit = nil, offset = nil, page = nil)
       fail(ArgumentError, "Missing search term") unless term
 
-      search = OAuth::Helper.escape(term)
-      search += "?limit_to_public_domain=#{NounProjectApi.configuration.public_domain ? 1 : 0}"
+      term = OAuth::Helper.escape(term)
+
+      args = {
+        "limit" => limit,
+        "offset" => offset,
+        "page" => page,
+        "limit_to_public_domain" => NounProjectApi.configuration.public_domain ? 1 : 0
+      }
+
+      query = search_query(args)
+      get_icons("/icons/#{term}#{query}")
+    end
+
+    def find_by_collection(slug_or_id, limit = nil, offset = nil, page = nil)
+      fail(ArgumentError, "Missing search term") unless term
 
       args = {
         "limit" => limit,
         "offset" => offset,
         "page" => page
-      }.reject { |_, v| v.nil? }
-      args.each { |k, v| search += "&#{k}=#{v}" } if args.size > 0
-
-      result = access_token.get("#{API_BASE}#{API_PATH}#{search}")
-      fail(ArgumentError, "Bad request") unless %w(200 404).include? result.code
-
-      if result.code == "200"
-        JSON.parse(result.body)["icons"].map { |icon| Icon.new(icon) }
-      else
-        []
-      end
+      }
+      query = search_query(args)
+      get_icons("/collection/#{slug_or_id}/icons#{query}")
     end
 
     # List recent uploads
@@ -42,18 +46,35 @@ module NounProjectApi
         "limit" => limit,
         "offset" => offset,
         "page" => page
-      }.reject { |_, v| v.nil? }
-      if args.size > 0
-        search = "?"
-        args.each { |k, v| search += "#{k}=#{v}&" }
-      else
-        search = ""
-      end
+      }
 
-      result = access_token.get("#{API_BASE}#{API_PATH}recent_uploads#{search}")
-      fail(ArgumentError, "Bad request") unless result.code == "200"
-
-      JSON.parse(result.body)["recent_uploads"].map { |icon| Icon.new(icon) }
+      query = search_query(args)
+      get_icons("/icons/recent_uploads#{search}")
     end
   end
+
+  private
+
+  def search_query(args)
+    args = args.reject { |_, v| v.nil? }
+    search = ""
+    if args.size > 0
+      search = "?"
+      args.each { |k, v| search += "#{k}=#{v}&" }
+    end
+    return search
+  end
+
+  def get_icons(api_path)
+    result = access_token.get("#{API_BASE}#{api_path}")
+    fail(ArgumentError, "Bad request") unless %w(200 404).include? result.code
+
+    if result.code == "200"
+      JSON.parse(result.body)["icons"].map { |icon| Icon.new(icon) }
+    else
+      []
+    end
+
+  end
+
 end

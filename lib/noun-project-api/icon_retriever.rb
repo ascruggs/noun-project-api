@@ -1,12 +1,21 @@
 require "noun-project-api/icon"
-require "noun-project-api/retriever"
+require "noun-project-api/connection"
 
 module NounProjectApi
   # Retrieve an icon.
-  class IconRetriever < Retriever
-    API_PATH = "/icon/".freeze
+  class IconRetriever
+    include Connection
     ITEM_CLASS = Icon
 
-    alias_method :find_by_slug, :find
+    # Find an item based on it's id.
+    def find(id)
+      fail(ArgumentError, "Missing id/slug") unless id
+
+      result = access_token.get("#{API_BASE}/icon/#{id}")
+      fail(ArgumentError, "Bad request") unless result.code == "200"
+
+      Icon.new(result.body)
+    end
+
   end
 end
