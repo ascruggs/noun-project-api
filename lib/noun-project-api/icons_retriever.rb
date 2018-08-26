@@ -49,31 +49,33 @@ module NounProjectApi
       }
 
       query = search_query(args)
-      get_icons("/icons/recent_uploads#{search}")
+      get_icons("/icons/recent_uploads#{query}")
     end
-  end
 
-  private
+    private
 
-  def search_query(args)
-    args = args.reject { |_, v| v.nil? }
-    search = ""
-    if args.size > 0
-      search = "?"
-      args.each { |k, v| search += "#{k}=#{v}&" }
+    def search_query(args)
+      args = args.reject { |_, v| v.nil? }
+      search = ""
+      if args.size > 0
+        search = "?"
+        args.each { |k, v| search += "#{k}=#{v}&" }
+      end
+      return search
     end
-    return search
-  end
 
-  def get_icons(api_path)
-    result = access_token.get("#{API_BASE}#{api_path}")
-    fail(ArgumentError, "Bad request") unless %w(200 404).include? result.code
+    def get_icons(api_path)
+      result = access_token.get("#{API_BASE}#{api_path}")
+      fail(ArgumentError, "Bad request") unless %w(200 404).include? result.code
 
-    if result.code == "200"
-      JSON.parse(result.body)["icons"].map { |icon| Icon.new(icon) }
-    else
-      []
+      if result.code == "200"
+        JSON.parse(result.body)["icons"].map { |icon| Icon.new(icon) }
+      else
+        []
+      end
+
     end
+
 
   end
 
